@@ -76,6 +76,7 @@ import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldGlowPx, heldGlowReco
 import { createQuiverArt, loadQuiverArrow, quiverRidesWith, BACK_QUIVER } from './eotbQuiver.js';   // QUIVER: a bow's quiver on the back
 import { createBackShieldArt, backShieldSeen, BACK_SHIELD } from './eotbBackShield.js';   // BACK-SHIELD: a sheathed layered body's shield on its back
 import { ammoCountFor } from '../../systems/inventory.js';   // QUIVER: arrows in it, with no rig to say
+import { paperdollDraw } from '../../../custom/paperdoll/paperdollExtensions.js';   // custom/paperdoll: the player's own paperdoll stands in for the sprite in third person
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -1179,6 +1180,14 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // maps alone (renderer.recordShadowBillboards - the same record the drawn body makes; no maps, no shadow, as a
       // ShadowsOnly renderer under no light), and None to nothing. Third person is untouched.
       const bbUp = face?.up ?? [0, 1, 0];
+      // custom/paperdoll: in third person the player's own paperdoll stands in for the sprite
+      // (custom/paperdoll/paperdollExtensions.js). The sprite stays when riding, transformed, dead or grown, and until the
+      // doll is ready. Its lantern, holster, quiver and back shield go with it: they hang off the sprite's marks.
+      if (!FP && grow === 1 && !last.riding && !last.transformed && !died && !last.died
+        && paperdollDraw({ renderer, feet: cam.feet, camRight, bbUp, conceal: batch.conceal })) {
+        dropLantern(); dropHolster(); dropQuiver(); dropBackShield();
+        return true;
+      }
       if (!FP || cfg.visibility === 2) renderer.drawBillboards([batch], camRight, bbUp);
       else if (cfg.visibility === 1) renderer.recordShadowBillboards?.([batch], camRight, bbUp);
       if (grow === 1) drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs

@@ -800,6 +800,18 @@ export async function composeDollFor(entity) {
   } catch { return null; }
 }
 
+/** custom/paperdoll: THE PLAYER'S DOLL WITHOUT ITS BACKDROP - for the third-person billboard
+ *  (custom/paperdoll/paperdollExtensions.js). composeDollFor, background off. `{ width, height, rgba }`,
+ *  or null before the art is loaded. */
+export async function composeDollTransparent(entity) {
+  if (!_art || !_deps) return null;
+  if (paperDollIdentityDrift(entity)) return composePaperDollPixels(_deps, entity, { context: _ident?.context ?? 'town', background: false });
+  try {
+    const { out, width, height } = await composeDoll(_art, _deps, entity, { background: false, scale: composeScale() });
+    return { width, height, rgba: out };
+  } catch { return null; }
+}
+
 /**
  * ONLINE1 (AUDIT ONLINE C1-C4, C8, C9): A DOLL FOR SOMEONE ELSE. The
  * art set for the entity's own identity (a small cache, the peers'
