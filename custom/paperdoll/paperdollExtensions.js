@@ -7,7 +7,7 @@
 // Needs (in src/): ui/paperDoll.js exporting composeDollTransparent (added), and the one
 // call + import in eotbBody.js. No scene, mwView or billboard-pass edits.
 
-import { composeDollTransparent, paperDollPixels } from '../../src/ui/paperDoll.js';
+import { composeDollTransparent, paperDollPixels, paperDollArtLoaded } from '../../src/ui/paperDoll.js';
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { drawnEquipTable } from '../../src/systems/capeShown.js';
 import { CAPSULE_HEIGHT } from '../../src/player/motor.js';
@@ -27,6 +27,23 @@ let retryAt = 0;
 let nextPollAt = 0;
 let lastSig = '';
 let lastDollVersion = -1;
+
+// ---- diagnostics: open the browser console (F12) and look for [paperdoll] lines ----
+const diag = { calls: 0, drawn: 0, composes: 0, nulls: 0, noBounds: 0, errors: 0, lastReason: '' };
+const seen = new Set();
+function note(reason, extra) {
+  diag.lastReason = reason;
+  if (seen.has(reason)) return;
+  seen.add(reason);
+  console.warn('[paperdoll] ' + reason, extra ?? '');
+}
+globalThis.__paperdoll = {
+  diag,
+  state: () => ({
+    enabled: isEnabled(), hasBatch: !!batch, busy, dirty, artLoaded: paperDollArtLoaded(),
+    hasPlayerEntity: !!playerEntity, retryInMs: Math.max(0, Math.round(retryAt - performance.now())),
+  }),
+};
 
 // ---- toggle ---------------------------------------------------------------
 
@@ -120,14 +137,16 @@ function refresh(renderer, entity, height) {
   dirty = false;
   busy = true;
   const fail = () => { dirty = true; retryAt = performance.now() + RETRY_DELAY_MS; };
+  diag.composes++;
   composeDollTransparent(entity)
     .then((px) => {
-      if (!px?.rgba) return fail();
+      if (!px?.rgba) { diag.nulls++; note(paperDollArtLoaded() ? 'compose returned null (art is loaded)' : 'doll art not loaded yet'); return fail(); }
       const r = alphaBounds(px.rgba, px.width, px.height);
-      if (!r) return fail();
+      if (!r) { diag.noBounds++; note('doll composed but fully transparent'); return fail(); }
       swapBatch(renderer, cropBottomUp(px.rgba, px.width, r), r.w, r.h, height);
+      note('doll ready (' + r.w + 'x' + r.h + ')');
     })
-    .catch(fail)
+    .catch((err) => { diag.errors++; note('error: ' + (err?.message ?? err), err); fail(); })
     .finally(() => { busy = false; });
 }
 
@@ -139,8 +158,10 @@ function refresh(renderer, entity, height) {
  *   { renderer, feet, camRight, bbUp, conceal, height? }
  */
 export function paperdollDraw({ renderer, feet, camRight, bbUp, conceal = null, height = null }) {
-  if (!isEnabled()) { if (batch) release(); return false; }
-  if (!renderer || !feet || !playerEntity) return false;
+  diag.calls++;
+  if (diag.calls === 1) note('hook reached');
+  if (!isEnabled()) { if (batch) release(); note('disabled by toggle'); return false; }
+  if (!renderer || !feet || !playerEntity) { note('missing input: ' + [!renderer && 'renderer', !feet && 'feet', !playerEntity && 'playerEntity'].filter(Boolean).join(',')); return false; }
   if (renderer_ !== renderer) { release(); renderer_ = renderer; }
 
   poll(playerEntity);
@@ -150,5 +171,6 @@ export function paperdollDraw({ renderer, feet, camRight, bbUp, conceal = null, 
   batch.origin[0] = feet[0]; batch.origin[1] = feet[1]; batch.origin[2] = feet[2];
   batch.conceal = conceal;
   renderer.drawBillboards([batch], camRight, bbUp);
+  diag.drawn++;
   return true;
 }
