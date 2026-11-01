@@ -12,6 +12,7 @@ import { playerEntity } from '../../src/characters/playerEntity.js';
 import { drawnEquipTable } from '../../src/systems/capeShown.js';
 import { CAPSULE_HEIGHT } from '../../src/player/motor.js';
 import { isEnabled, setEnabled } from './paperdollSetting.js';
+import { alphaBounds, cropBottomUp } from './paperdollImage.js';
 
 const TEXTURE_SET = 900000;      // the peers' doll archive id (net/remotePlayers.js PEER_ARCHIVE)
 const RETRY_DELAY_MS = 500;      // a failed/empty compose waits this long, not a frame
@@ -50,27 +51,6 @@ globalThis.__paperdoll = {
 export { isEnabled, setEnabled };
 
 // ---- helpers --------------------------------------------------------------
-
-function alphaBounds(rgba, w, h) {
-  let x0 = w, y0 = h, x1 = -1, y1 = -1;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (rgba[(y * w + x) * 4 + 3] === 0) continue;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-    }
-  }
-  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
-}
-
-// Rows written bottom-up: the billboard samples GL's bottom-up texel order (see net/remotePlayers.js cropRgba).
-function cropBottomUp(rgba, w, r) {
-  const out = new Uint8Array(r.w * r.h * 4);
-  for (let y = 0; y < r.h; y++) {
-    const src = ((r.y + y) * w + r.x) * 4;
-    out.set(rgba.subarray(src, src + r.w * 4), (r.h - 1 - y) * r.w * 4);
-  }
-  return out;
-}
 
 /** A cheap signature of what the player wears: every primitive field of each drawn item. */
 function wornSignature(entity) {

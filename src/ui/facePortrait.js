@@ -98,7 +98,10 @@ export async function loadFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
 
 /** The ten classic records of one race and gender, as canvases (loadFaceCanvases's classic half). */
 async function classicFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
-  const key = `${raceKey}|${gender}|${scale}`;
+  // custom/paperdoll: an attached mod's faces (systems/dfmodTextures.js) stand in for the classic records, as the
+  // paperdoll's own head does - and a mod attached or removed rebuilds the set (the generation is in the key)
+  const dfmod = await import('../systems/dfmodTextures.js').catch(() => null);
+  const key = `${raceKey}|${gender}|${scale}#${dfmod?.dfmodGeneration?.() ?? 0}`;
   const have = cache.get(key);
   if (have?.canvases) return have.canvases;
   if (have?.pending) return have.pending;
@@ -132,7 +135,7 @@ async function classicFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
     // to prevent, so the hole is KEPT and every reader already handles
     // one.
     const set = [];
-    for (let i = 0; i < races.FACES_PER_RACE; i++) set.push(bitmapCanvas(cif.getDFBitmap(i, 0), palette.rgb, { scale }));
+    for (let i = 0; i < races.FACES_PER_RACE; i++) set.push(await modFace(dfmod, name, i, bitmapCanvas(cif.getDFBitmap(i, 0), palette.rgb, { scale }), scale));
     return set;
   })().then((set) => {
     cache.set(key, { canvases: set });
@@ -146,6 +149,31 @@ async function classicFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
   });
   cache.set(key, { pending });
   return pending;
+}
+
+/** custom/paperdoll: face record `i` of `file` as an attached mod draws it, on a canvas the classic record's size
+ *  (the mod's picture fitted to it), or `classic` where no mod carries it. Never throws.
+ *  @param {any} dfmod systems/dfmodTextures.js, or null @param {string} file @param {number} i
+ *  @param {HTMLCanvasElement|null} classic @param {number} scale */
+async function modFace(dfmod, file, i, classic, scale) {
+  try {
+    const alt = await dfmod?.dfmodCifRciImage?.(file, i, 0);
+    if (!alt?.width || !alt.height || !alt.data || !globalThis.document) return classic;
+    const src = document.createElement('canvas');
+    src.width = alt.width;
+    src.height = alt.height;
+    src.getContext('2d')?.putImageData(new ImageData(new Uint8ClampedArray(alt.data), alt.width, alt.height), 0, 0);
+    const out = document.createElement('canvas');
+    out.width = classic?.width || alt.width * scale;
+    out.height = classic?.height || alt.height * scale;
+    const g = out.getContext('2d');
+    if (!g) return classic;
+    g.imageSmoothingEnabled = alt.width >= out.width; // a smaller picture is stretched sharp, a hi-res one filtered down
+    g.drawImage(src, 0, 0, out.width, out.height);
+    return out;
+  } catch {
+    return classic;
+  }
 }
 
 /**

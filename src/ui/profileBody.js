@@ -16,6 +16,10 @@ import {
 import { layeredGenderOf } from '../player/eyeOfTheBeholder/layeredArmor.js';
 import { STAGE_BONES, stageCameraOfBones } from '../render/characterStage.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
+import { composeDollTransparent, paperDollArtLoaded, paperDollPixels } from './paperDoll.js'; // custom/paperdoll: the doll as a body
+import { playerEntity } from '../characters/playerEntity.js';
+import { isEnabled as paperdollOn } from '../../custom/paperdoll/paperdollSetting.js';
+import { alphaBounds, cropBottomUp } from '../../custom/paperdoll/paperdollImage.js';
 
 /** The kinds of body a character can be shown as, in the order the stage prefers them: what the world draws first. */
 export const PROFILE_BODY_KINDS = Object.freeze(['mw', 'sprite']);
@@ -44,6 +48,33 @@ export const mwHeadOf = (/** @type {any} */ arm) =>
 /** The billboard scale the player chose (eotbBody.js look()'s `scale`). Pure. */
 export const spriteScaleOf = (/** @type {Record<string, any>} */ settings = {}) =>
   (settings['Animation.BillboardScale'] ?? 1) + (settings['Animation.FineBillboardScale'] ?? 0);
+
+/** custom/paperdoll: THE PAPERDOLL AS A BODY, in the stage's sprite shape (colors bottom first, a metre a pixel) - what
+ *  the world draws in third person when the Look is Paperdoll (custom/paperdoll/paperdollExtensions.js). `doll` marks it
+ *  for the stage, which draws it even where its sprite-reader finds no marks. Null where the doll cannot be composed.
+ *  @param {any} entity the character whose gear it wears
+ *  @param {{ compose?: (e: any) => Promise<any> }} [deps] */
+export async function dollBodyOf(entity, { compose = composeDollTransparent } = {}) {
+  if (!entity) return null;
+  const px = await compose(entity);
+  if (!px?.rgba || !px.width || !px.height) return null;
+  const r = alphaBounds(px.rgba, px.width, px.height);
+  if (!r) return null;
+  const pixels = cropBottomUp(px.rgba, px.width, r);
+  return {
+    kind: 'sprite',
+    doll: true,
+    width: r.w,
+    height: r.h,
+    colors: new Uint32Array(pixels.buffer),
+    mpp: CAPSULE_HEIGHT / r.h,
+    base: 0,
+    shift: 0,
+    key: 'paperdoll',
+    view: 0,
+    art: 1,
+  };
+}
 
 /** The sprite the world draws standing, front on (the idle table's orientation `view`, 0), as the stage takes it: its picture's
  *  color32 rows bottom first, its metres a pixel, its foot over the feet and its offset across - eotbBody.js place()'s
@@ -91,11 +122,18 @@ export function profileBodies({
       return {};
     }
   };
+  // custom/paperdoll: in a game (the arm is handed in paused) the character played is the live entity; at the door
+  // there is none, so the doll is not offered and the sprite shows
+  const dollWho = () => (arm && paperdollOn() && paperDollArtLoaded() ? playerEntity : null);
   return {
-    kinds: () => PROFILE_BODY_KINDS.filter((k) => k !== 'mw' || !!arm?.canThirdPerson?.()),
+    kinds: () => {
+      const base = PROFILE_BODY_KINDS.filter((k) => k !== 'mw' || !!arm?.canThirdPerson?.());
+      return dollWho() ? base.flatMap((k) => (k === 'sprite' ? ['doll', k] : [k])) : base; // the doll before the sprite it replaces
+    },
     /** What a kind's body is drawn in now - a body asked in another look is asked again (the skin changed beside it). */
     lookKey(/** @type {string} */ kind) {
       if (kind === 'mw') return 'mw';
+      if (kind === 'doll') return `doll@${paperDollPixels()?.version ?? 0}`; // custom/paperdoll: new when the doll is recomposed
       const s = settingsNow();
       return `${JSON.stringify(profileSpriteLook(who() ?? {}, s))}@${spriteScaleOf(s)}`;
     },
@@ -116,6 +154,13 @@ export function profileBodies({
           r = null;
         }
         return r?.data ? { kind: 'mw', ...r, head } : null;
+      }
+      if (kind === 'doll') {
+        try {
+          return await dollBodyOf(dollWho());
+        } catch {
+          return null;
+        }
       }
       const s = settingsNow();
       try {

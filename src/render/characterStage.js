@@ -363,11 +363,14 @@ export function startCharacterStage(
         }),
         shift: shown.shift ?? 0,
       };
-      if (!poseFromFigure(fig, pose)) {
+      const posed = poseFromFigure(fig, pose);
+      if (!posed && !shown.doll) {
         shown = null;
         poseAtRest(pose);
       } else {
-        auraCapeStep(wearer, { feet: [0, 0, 0], yaw: 0, bones: auraSpriteBones(fig) });
+        // custom/paperdoll: a paperdoll whose marks the sprite reader cannot find is still drawn, standing at rest
+        if (posed) auraCapeStep(wearer, { feet: [0, 0, 0], yaw: 0, bones: auraSpriteBones(fig) });
+        else poseAtRest(pose);
         sprite = { w: shown.width * shown.mpp, h: shown.height * shown.mpp, x: fig.shift, y: fig.base };
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.texImage2D(
