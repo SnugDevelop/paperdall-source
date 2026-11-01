@@ -11,9 +11,9 @@ import { composeDollTransparent, paperDollPixels, paperDollArtLoaded } from '../
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { drawnEquipTable } from '../../src/systems/capeShown.js';
 import { CAPSULE_HEIGHT } from '../../src/player/motor.js';
+import { isEnabled, setEnabled } from './paperdollSetting.js';
 
 const TEXTURE_SET = 900000;      // the peers' doll archive id (net/remotePlayers.js PEER_ARCHIVE)
-const STORAGE_KEY = 'custom.paperdoll.enabled';
 const RETRY_DELAY_MS = 500;      // a failed/empty compose waits this long, not a frame
 const POLL_MS = 250;             // how often the worn gear is re-read
 
@@ -45,16 +45,9 @@ globalThis.__paperdoll = {
   }),
 };
 
-// ---- toggle ---------------------------------------------------------------
+// ---- toggle: see paperdollSetting.js (the Skin card's Look toggle writes it) -----------------
 
-export function isEnabled() {
-  try { return localStorage.getItem(STORAGE_KEY) !== '0'; } catch { return true; }
-}
-export function setEnabled(on) {
-  try { localStorage.setItem(STORAGE_KEY, on ? '1' : '0'); } catch { /* ignore */ }
-  dirty = true;
-  if (!on) release();
-}
+export { isEnabled, setEnabled };
 
 // ---- helpers --------------------------------------------------------------
 

@@ -65,6 +65,7 @@ import { spriteFor, eotbSpriteUrl } from '../player/eyeOfTheBeholder/eotbSprite.
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
 import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js'; // LAYERED-GEAR
 import { t } from '../systems/textManager.js';
+import { isEnabled as paperdollOn, setEnabled as setPaperdoll } from '../../custom/paperdoll/paperdollSetting.js'; // custom/paperdoll: the Paperdoll look
 
 const VENDOR = 'eye-of-the-beholder';
 const FOOT = 'Graphics.OnFoot';
@@ -213,26 +214,30 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = 
     root.append(p);
   }
 
-  /** LAYERED-GEAR: the Look toggle - Skins or Layered Gearing, one radio each; a press switches the look at once. */
-  function lookToggle(layeredOn) {
+  /** LAYERED-GEAR: the Look toggle - Skins, Layered Gearing or (custom/paperdoll) Paperdoll, one radio each; a press
+   *  switches the look at once.
+   *  @param {'skins'|'layered'|'doll'} mode */
+  function lookToggle(mode) {
     const row = el('div', 'skinmode');
     const word = t('skin.look', 'Look');
     row.append(el('span', 'fieldlabel', word));
     const set = el('div', 'skinmodeset');
     set.setAttribute('role', 'radiogroup');
     set.setAttribute('aria-label', word);
-    for (const [on, name] of [
-      [false, t('skin.mode.skins', 'Skins')],
-      [true, t('skin.mode.layered', 'Layered Gearing (WIP)')],
+    for (const [id, name] of [
+      ['skins', t('skin.mode.skins', 'Skins')],
+      ['layered', t('skin.mode.layered', 'Layered Gearing (WIP)')],
+      ['doll', t('skin.mode.paperdoll', 'Paperdoll')],
     ]) {
-      const chosen = on === layeredOn;
+      const chosen = id === mode;
       const b = el('button', `skinmodebtn${chosen ? ' on' : ''}`, name);
       b.type = 'button';
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', chosen ? 'true' : 'false');
       b.onclick = () => {
         if (chosen) return;
-        setModSetting(VENDOR, LAYERED, on ? layeredBodyToWear() : 0);
+        setPaperdoll(id === 'doll');
+        if (id !== 'doll') setModSetting(VENDOR, LAYERED, id === 'layered' ? layeredBodyToWear() : 0);
         open = null;
         paint();
       };
@@ -272,8 +277,21 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = 
     const layeredOn = w.layered > 0;
     const own = w.layered === LAYERED_OWN;
     if (w.layered === 1 || w.layered === 2) lastBody = w.layered;
-    lookToggle(layeredOn);
-    if (layeredOn) {
+    const mode = paperdollOn() ? 'doll' : layeredOn ? 'layered' : 'skins';
+    lookToggle(mode);
+    if (mode === 'doll') {
+      // custom/paperdoll: the paperdoll stands in for the sprite on foot; Mounted stays the rider's skin
+      root.append(
+        el(
+          'p',
+          'meta',
+          t(
+            'skin.paperdoll.about',
+            'On foot you are drawn as your paperdoll, in the gear you wear. On a horse, or when transformed, you are drawn in your skin.',
+          ),
+        ),
+      );
+    } else if (layeredOn) {
       // LAYERED-GEAR: the body, drawn in the armor worn - the On foot panel put away, Mounted as ever
       root.append(
         el(
