@@ -1,4 +1,4 @@
-Paperfall is a custom DFO client designed to draw in the player's paperdoll sprite in place of the usual animated sprite.
+Paperdall is a custom DFO client designed to draw in the player's paperdoll sprite in place of the usual animated sprite.
 
 DISCLAIMER: Vibe coded from ChatGPT and Claude, so this is not my own work and may be buggy. 
 
