@@ -1184,7 +1184,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // (custom/paperdoll/paperdollExtensions.js). The sprite stays when riding, transformed, dead or grown, and until the
       // doll is ready. Its lantern, holster, quiver and back shield go with it: they hang off the sprite's marks.
       if (!FP && grow === 1 && !last.riding && !last.transformed && !died && !last.died
-        && paperdollDraw({ renderer, feet: cam.feet, camRight, bbUp, conceal: batch.conceal })) {
+        && paperdollDraw({ renderer, feet: cam.feet, camRight, bbUp, conceal: batch.conceal, orientation: shown?.orientation })) {
         dropLantern(); dropHolster(); dropQuiver(); dropBackShield();
         return true;
       }

@@ -11,8 +11,12 @@ import { composeDollTransparent, paperDollPixels, paperDollArtLoaded } from '../
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { drawnEquipTable } from '../../src/systems/capeShown.js';
 import { CAPSULE_HEIGHT } from '../../src/player/motor.js';
-import { isEnabled, setEnabled } from './paperdollSetting.js';
+import { isEnabled, setEnabled, backSpriteOn } from './paperdollSetting.js';
 import { alphaBounds, cropBottomUp } from './paperdollImage.js';
+
+/** The wheel positions that show the player's back: 4 is straight behind (the one view EOTB paints its back), 3 and 5 the
+ *  two diagonals either side of it. 0 is front on, 2 and 6 the sides. With the back sprite on, these draw the sprite. */
+const BACK_ORIENTATIONS = new Set([3, 4, 5]);
 
 const TEXTURE_SET = 900000;      // the peers' doll archive id (net/remotePlayers.js PEER_ARCHIVE)
 const RETRY_DELAY_MS = 500;      // a failed/empty compose waits this long, not a frame
@@ -128,12 +132,14 @@ function refresh(renderer, entity, height) {
 /**
  * Draw the player's paperdoll in place of the sprite. Returns true when it drew (the caller then skips the
  * sprite), false when the sprite should draw: the toggle is off, or the doll is not composed yet.
- *   { renderer, feet, camRight, bbUp, conceal, height? }
+ *   { renderer, feet, camRight, bbUp, conceal, height?, orientation? }   `orientation`: the sprite's wheel position now (eotbBody's shown.orientation)
  */
-export function paperdollDraw({ renderer, feet, camRight, bbUp, conceal = null, height = null }) {
+export function paperdollDraw({ renderer, feet, camRight, bbUp, conceal = null, height = null, orientation = null }) {
   diag.calls++;
   if (diag.calls === 1) note('hook reached');
   if (!isEnabled()) { if (batch) release(); note('disabled by toggle'); return false; }
+  // the animated back sprite, when asked for: seen from behind the sprite draws as it always did, the doll keeps the front
+  if (backSpriteOn() && BACK_ORIENTATIONS.has(orientation)) { diag.lastReason = 'back sprite'; return false; }
   if (!renderer || !feet || !playerEntity) { note('missing input: ' + [!renderer && 'renderer', !feet && 'feet', !playerEntity && 'playerEntity'].filter(Boolean).join(',')); return false; }
   if (renderer_ !== renderer) { release(); renderer_ = renderer; }
 

@@ -65,7 +65,7 @@ import { spriteFor, eotbSpriteUrl } from '../player/eyeOfTheBeholder/eotbSprite.
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
 import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js'; // LAYERED-GEAR
 import { t } from '../systems/textManager.js';
-import { isEnabled as paperdollOn, setEnabled as setPaperdoll } from '../../custom/paperdoll/paperdollSetting.js'; // custom/paperdoll: the Paperdoll look
+import { isEnabled as paperdollOn, setEnabled as setPaperdoll, backSpriteOn, setBackSprite } from '../../custom/paperdoll/paperdollSetting.js'; // custom/paperdoll: the Paperdoll look
 
 const VENDOR = 'eye-of-the-beholder';
 const FOOT = 'Graphics.OnFoot';
@@ -291,6 +291,18 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = 
           ),
         ),
       );
+      // custom/paperdoll: the paperdoll as the front only - seen from behind, the animated sprite draws
+      const back = el('label', 'meta');
+      const box = el('input');
+      box.type = 'checkbox';
+      box.checked = backSpriteOn();
+      box.style.marginRight = '8px';
+      box.onchange = () => {
+        setBackSprite(box.checked);
+        paint();
+      };
+      back.append(box, t('skin.paperdoll.back', 'Use the animated sprite when seen from behind'));
+      root.append(back);
     } else if (layeredOn) {
       // LAYERED-GEAR: the body, drawn in the armor worn - the On foot panel put away, Mounted as ever
       root.append(

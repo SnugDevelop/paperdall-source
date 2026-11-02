@@ -26,3 +26,25 @@ export function setEnabled(on) {
   try { appStorage()?.setItem(STORAGE_KEY, cache ? '1' : '0'); } catch { /* no storage */ }
   return cache;
 }
+
+// ---- the animated back sprite: with it on, the doll is the FRONT only; seen from behind, the sprite draws ----
+const BACK_KEY = 'custom.paperdoll.backSprite';
+/** What a player who never touched it gets: false keeps the doll from every side, true shows the sprite from behind. */
+const BACK_DEFAULT_ON = false;
+
+let backCache = null;
+
+export function backSpriteOn() {
+  if (backCache === null) {
+    let v = null;
+    try { v = appStorage()?.getItem(BACK_KEY); } catch { /* no storage */ }
+    backCache = v == null ? BACK_DEFAULT_ON : v !== '0';
+  }
+  return backCache;
+}
+
+export function setBackSprite(on) {
+  backCache = !!on;
+  try { appStorage()?.setItem(BACK_KEY, backCache ? '1' : '0'); } catch { /* no storage */ }
+  return backCache;
+}
