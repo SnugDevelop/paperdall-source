@@ -60,7 +60,7 @@ merge cleanly.
   (`src/assets/branding/dfo-online.png`, same size as the original so layouts are unchanged). A matching title
   splash is at `public/logo.png`, and the landing page's title text is updated.
 - **Support links removed; About button added.** The Patreon and Ko-fi icons are gone from the in-game main menu
-  and from the landing page. A small "i" button takes their place and opens a disclaimer about this build.
+  and from the landing page. A small "i" button takes their place and opens the AI disclaimer about this build.
 
 ### Files touched
 
