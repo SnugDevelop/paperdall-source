@@ -2251,6 +2251,9 @@ export function createDecorTool(deps) {
     }
     if (decorSlotKey(e)) return;
     if (suspended() || panel?.isOpen() || isTextEntryTarget(e.target)) return;
+    // Browse: Interact / Activate reach the host so the plaque's lit row runs (arm would swallow them for nothing)
+    const act = deps.actionOf?.(e) ?? null;
+    if (placing?.browse && (act === 'Interact' || act === 'ActivateCenterObject')) return;
     e.preventDefault?.();
     e.stopImmediatePropagation?.();
     arm(e);

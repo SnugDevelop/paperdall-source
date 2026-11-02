@@ -8297,9 +8297,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this._wetRoadOrigin[0] = originX; this._wetRoadOrigin[1] = originZ;
         this._wetRoadTileSize = tileSize;
         // eco.origin or snow's first world tile - the lattice wetGround's snowNoise uses
-        const ox = eco ? eco.origin[0] : (snow ? snow[0] : 0);
-        const oz = eco ? eco.origin[1] : (snow ? snow[1] : 0);
-        this._wetRoadEco[0] = ox | 0; this._wetRoadEco[1] = oz | 0;
+        const ecoX = eco ? eco.origin[0] : (snow ? snow[0] : 0);
+        const ecoZ = eco ? eco.origin[1] : (snow ? snow[1] : 0);
+        this._wetRoadEco[0] = ecoX | 0; this._wetRoadEco[1] = ecoZ | 0;
       }
     }
   }

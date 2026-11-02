@@ -1434,8 +1434,7 @@ export function createHomeYards(deps) {
       if (!tool.flying() || tool.ghost()) return false;
       const hit = pickActivatableHit(eye, dir, cur?.yard.pool.targets() ?? [], deps.collider?.() ?? null);
       if (typeof hit?.key !== 'string' || !hit.key.startsWith('decor:')) return false;
-      const verb = plaqueActionFor(hit.key);
-      if (verb) tool.act(verb, hit.key.slice('decor:'.length));
+      tool.act(plaqueActionFor(hit.key) ?? 'move', hit.key.slice('decor:'.length));   // same law as the room: lit row, else Move
       return true;
     },
     /** The yards standing (the pins' window). */
