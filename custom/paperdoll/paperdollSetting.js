@@ -48,3 +48,24 @@ export function setBackSprite(on) {
   try { appStorage()?.setItem(BACK_KEY, backCache ? '1' : '0'); } catch { /* no storage */ }
   return backCache;
 }
+
+// ---- the golden halo (custom/paperdoll/goldHalo.js): a local extra over your own head, on by default ----
+const HALO_KEY = 'custom.paperdoll.goldHalo';
+const HALO_DEFAULT_ON = true;
+
+let haloCache = null;
+
+export function haloOn() {
+  if (haloCache === null) {
+    let v = null;
+    try { v = appStorage()?.getItem(HALO_KEY); } catch { /* no storage */ }
+    haloCache = v == null ? HALO_DEFAULT_ON : v !== '0';
+  }
+  return haloCache;
+}
+
+export function setHalo(on) {
+  haloCache = !!on;
+  try { appStorage()?.setItem(HALO_KEY, haloCache ? '1' : '0'); } catch { /* no storage */ }
+  return haloCache;
+}

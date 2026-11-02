@@ -65,7 +65,7 @@ import { spriteFor, eotbSpriteUrl } from '../player/eyeOfTheBeholder/eotbSprite.
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
 import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js'; // LAYERED-GEAR
 import { t } from '../systems/textManager.js';
-import { isEnabled as paperdollOn, setEnabled as setPaperdoll, backSpriteOn, setBackSprite } from '../../custom/paperdoll/paperdollSetting.js'; // custom/paperdoll: the Paperdoll look
+import { isEnabled as paperdollOn, setEnabled as setPaperdoll, backSpriteOn, setBackSprite, haloOn, setHalo } from '../../custom/paperdoll/paperdollSetting.js'; // custom/paperdoll: the Paperdoll look
 
 const VENDOR = 'eye-of-the-beholder';
 const FOOT = 'Graphics.OnFoot';
@@ -338,6 +338,15 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = 
       panel('On foot', FOOT, sets.foot, w.foot, FOOT_GROUPS);
     }
     panel('Mounted', HORSE, sets.horse, w.horse, [{ label: '', from: 0, to: Infinity }]);
+    // custom/paperdoll: the golden halo - a local extra over your own head in third person, never sent to the service
+    const halo = el('label', 'meta');
+    const haloBox = el('input');
+    haloBox.type = 'checkbox';
+    haloBox.checked = haloOn();
+    haloBox.style.marginRight = '8px';
+    haloBox.onchange = () => setHalo(haloBox.checked);
+    halo.append(haloBox, t('skin.halo', 'Golden halo over my head (only you see it)'));
+    root.append(halo);
   }
 
   paint();
