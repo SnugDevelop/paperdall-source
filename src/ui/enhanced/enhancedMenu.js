@@ -1597,6 +1597,7 @@ function copyToOffline(row) {
     let snap = null;
     try { snap = JSON.parse(got.text); } catch { snap = null; }
     if (!snap || typeof snap !== 'object') return { ok: false, error: 'no-data' };
+    (await import('../../systems/item/knownItemsOnly.js')).dropUnknownItems(snap);   // a newer realm's items this build cannot read
     snap = offlineCopyOf(snap);   // AUDIT LIVED1 E: the world's stamps rebased onto the character's clock, the one clock offline
     snap.characterId = mintCharacterId();
     const r = saveSlot(snap.name || row.name, REALM_COPY_SAVE_NAME, snap, { storage: appStorage() });
@@ -2295,7 +2296,7 @@ function categoryCard({ pool = portPool(), pause = false } = {}) {
  *  of English words did not know its own note, and the row was the one on the tab no language reached. */
 const PRESET_WORDS = {
   name: () => t('menu.settings.preset.name', 'Quality preset'),
-  note: () => t('menu.settings.preset.note', 'View distance, grass, clouds, ground sharpness, water, windows and steady shadows.'),
+  note: () => t('menu.settings.preset.note', 'View distance, grass, clouds, ground sharpness, water, wet ground, windows and steady shadows.'),
   effect: () => t('menu.settings.preset.effect', 'Steady shadows and the windows change at once; the rest when the world next loads.'),
   custom: () => t('menu.settings.preset.custom', 'Custom'),
 };
@@ -4825,8 +4826,24 @@ function drawDoors(menu) {
     more.append(doorBtn('back', t('menu.home.back', 'Back'), '', level('top')));
     return;
   }
+  // a browser's Online asks where first, as the desktop launcher's PLAY does; private servers live in the app (a page
+  // can neither host one nor reach a friend's PC from an https page)
+  if (homeLevel === 'where') {
+    const where = page('px-page-online', t('menu.home.where', 'Where to play'));
+    where.append(doorBtn('online', t('menu.home.mainServers', 'Main servers'), t('menu.home.onlineSub', 'Play with others in the shared world'), () => go('online')));
+    where.append(doorBtn('private', t('menu.home.private', 'Private server'), t('menu.home.privateSub', 'Host a game or join a friend\'s'), level('private')));
+    where.append(doorBtn('back', t('menu.home.back', 'Back'), '', level('top')));
+    return;
+  }
+  if (homeLevel === 'private') {
+    const priv = page('px-page-online', t('menu.home.private', 'Private server'));
+    priv.append(el('p', 'px-pagenote', t('menu.home.privateNote', 'Private servers run in the desktop app: host a game on your PC, or join a friend\'s by their address. A browser cannot do either.')));
+    priv.append(doorBtn('getapp', t('menu.home.getApp', 'Get the desktop app'), '', () => globalThis.open?.('../#desktop', '_blank', 'noopener')));
+    priv.append(doorBtn('back', t('menu.home.back', 'Back'), '', level('where')));
+    return;
+  }
   page('px-page-online', t('menu.home.realmHead', 'The Realm'))
-    .append(doorBtn('online', railLabel('Online'), t('menu.home.onlineSub', 'Play with others in the shared world'), () => go('online')));
+    .append(doorBtn('online', railLabel('Online'), t('menu.home.onlineSub', 'Play with others in the shared world'), globalThis.daggerShell ? () => go('online') : level('where')));
   page('px-page-offline', t('menu.home.ownHead', 'Thine Own Tale'))
     .append(doorBtn('offline', t('menu.home.offline', 'Offline'), t('menu.home.offlineSub', 'Your own game, kept on this device'), level('offline')));
   // Settings and Overhauls stand in the foot's box beside Screenshots and About (appendPxFoot) - UI-CALM, a player:

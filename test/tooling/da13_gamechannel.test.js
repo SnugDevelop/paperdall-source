@@ -458,7 +458,7 @@ test('DA13: the shell - the game\'s channel asked first everywhere, served by th
   assert.match(main, /click: \(\) => checkForUpdatesLoudly\(\),/);
   // served by the version in use
   const serve = sliceOf('function handleDagger(req) {', '// ---- updating:');
-  assert.match(serve, /if \(gameStore\?\.active\(\)\) \{\s*const file = gameStore\.resolve\(rel\) \?\? gameStore\.resolve\(`\$\{rel\}\/index\.html`\);\s*return file \? fileResponse\(file\) : new Response\('not found', \{ status: 404 \}\);\s*\}/,
+  assert.match(serve, /const store = servingStore \?\? gameStore;.*\s*if \(store\?\.active\(\)\) \{\s*const file = store\.resolve\(rel\) \?\? store\.resolve\(`\$\{rel\}\/index\.html`\);\s*return file \? fileResponse\(file\) : new Response\('not found', \{ status: 404 \}\);\s*\}/,
     'a path the version does not name is not served - whatever the install holds');
   assert.ok(serve.indexOf('gameStore?.active()') < serve.indexOf('let p = path.normalize(path.join(DIST, rel));'), 'before the install\'s own copy');
   // counted, switched at a document load, proved, given up
@@ -574,4 +574,9 @@ test('DA13: the release script\'s own commands, run - seed and pack from the env
     assert.equal(good.status, 0);
     assert.match(good.stdout, /^v0\.1\.10 -> v0\.1\.12: 1 files, /);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('HOSTING-PIN: the pin is null or a release tag the channel reads, so Host and Join can fetch it', () => {
+  const { HOSTING_PIN } = require('../../app/lib/hostingPin.cjs');
+  assert.ok(HOSTING_PIN === null || G.versionOfTag(HOSTING_PIN), `not a release tag: ${HOSTING_PIN}`);
 });
