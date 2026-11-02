@@ -213,7 +213,6 @@ import { keyCodeForDomCode, KEYCODE_NONE } from '../../systems/keyCodes.js';   /
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting, onlineWholeModKey, ONLINE_ROOM_MOD_KEYS } from '../../systems/online/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { onlineSyncPlan, applyOnlineSync, lastOnlineSync, undoOnlineSync } from '../../systems/online/onlineSync.js';   // UXB1-E: the room's rules, copied home
 import { CREDITS, translationCredits } from '../credits.js';   // CR1: who made what the port carries
-import { SUPPORT_ASKS } from '../supportAsks.js';   // SUPPORT1: the project's asks - the website's corner and this door's
 import { t, tIn, currentLocale, localeInfo, localeTable, availableLocales, BASE_LOCALE, localizedText, formatText } from '../../systems/textManager.js';   // L10N1b: the port's own strings, the language row and the first-run offer; L10N3d: DFU's Internal_Strings
 import { localeForBrowser, catalogLocale } from '../../systems/localeCatalog.js';   // L10N1b
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
@@ -1281,24 +1280,35 @@ function profileMark() {
   });
 }
 
-/** SUPPORT1 (Mac, 2026-10-05: "add the patron/kofi ingame on the main menu as 2 icons"): THE ASKS, top-left of the
- *  door - the one corner it had free. An icon a platform, its mark drawn by ui/supportAsks.js exactly as the website's
- *  corner draws it, its name on the pointer's tooltip and in what a screen reader says. Each is a LINK out of the game,
- *  never a press the door acts on: a new tab on the web, the system browser from the desktop app (app/main.cjs hands
- *  http(s) there), as the credits' links and TERMS1's documents open. */
+/** PAPERFALL: the corner that held SUPPORT1's two links (Patreon, Ko-fi) holds ONE icon now - About - which opens this
+ *  build's disclaimer. It rides the same nav and the same frame classes (`px-support`, `px-supportlink`), so the door's
+ *  layout and its stylesheet are untouched. The dialog is the browser's own <dialog>: Escape and its Close button shut
+ *  it, and so does a press on the dark behind it. */
+const ABOUT_TEXT = [
+  'Paperfall is a custom DFO client designed to draw in the player\u2019s paperdoll sprite in place of the usual animated sprite.',
+  'DISCLAIMER: Vibe coded from ChatGPT and Claude, so this is not my own work and is buggy.',
+];
 function supportMarks() {
   const nav = el('nav', 'px-support');
-  nav.setAttribute('aria-label', 'Support');
-  for (const ask of SUPPORT_ASKS) {
-    const a = el('a', `px-supportlink px-support-${ask.id}`);
-    a.href = ask.url; a.target = '_blank'; a.rel = 'noopener';
-    a.title = ask.label;
-    a.setAttribute('aria-label', ask.label);
-    const mark = el('i', `supmark supmark-${ask.id}`);
-    mark.setAttribute('aria-hidden', 'true');
-    a.append(mark);
-    nav.append(a);
-  }
+  nav.setAttribute('aria-label', t('menu.about.nav', 'About this build'));
+  const btn = el('button', 'px-supportlink px-support-about', 'i');
+  btn.type = 'button';
+  const label = t('menu.about.label', 'About Paperfall');
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+  Object.assign(btn.style, { font: 'italic 700 24px Georgia, "Times New Roman", serif', color: '#d8cfae', cursor: 'pointer' });
+  const dlg = el('dialog', 'px-aboutbox');
+  Object.assign(dlg.style, { maxWidth: 'min(520px, calc(100vw - 32px))', padding: '22px 26px 20px', color: '#d8cfae', background: '#14120d', border: '2px solid #7d7460', lineHeight: '1.5', textAlign: 'left' });
+  for (const line of ABOUT_TEXT) { const p = el('p', null, line); p.style.margin = '0 0 14px'; dlg.append(p); }
+  const close = el('button', null, t('menu.about.close', 'Close'));
+  close.type = 'button';
+  Object.assign(close.style, { font: 'inherit', cursor: 'pointer', padding: '6px 16px', color: '#d8cfae', background: 'transparent', border: '2px solid #7d7460' });
+  close.onclick = () => dlg.close();
+  dlg.append(close);
+  dlg.addEventListener('keydown', (e) => e.stopPropagation());   // the door's own keys (Escape and the rest) stay out of it
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  btn.onclick = () => dlg.showModal();
+  nav.append(btn, dlg);
   return nav;
 }
 

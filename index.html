@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>DFO Online</title>
+  <title>Paperdall Online</title>
   <!-- TI2 (2026-09-11): the phone's chrome colour. The manifest and the
        home-screen icons are the GAME page's (play/index.html): this page
        references no file, by its own test's law. -->
   <meta name="theme-color" content="#0a0c11" />
   <meta name="description" content="An open-source reimplementation of a classic 1996 RPG. Bring your own copy of The Elder Scrolls II: Daggerfall; nothing is uploaded." />
-  <meta property="og:title" content="DFO Online" />
+  <meta property="og:title" content="Paperdall Online" />
   <meta property="og:description" content="An open-source reimplementation of a classic 1996 RPG, running from your own copy of The Elder Scrolls II: Daggerfall. Works on desktop or phone with no install, or as a downloadable app." />
   <meta property="og:type" content="website" />
   <!--
@@ -232,6 +232,16 @@
       .foot .l, .foot .c, .foot .r { justify-self: center; }
     }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    /* PAPERFALL: the About icon, in the corner where the support plaques were, and its disclaimer. HTML only -
+       popovertarget opens it; a press outside it, or Escape, closes it. */
+    button.ask { font-family: inherit; cursor: pointer; }
+    .aboutmark { display: inline-grid; place-items: center; width: 24px; height: 24px; border: 2px solid #d8cfae; border-radius: 50%;
+      font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 15px; line-height: 1; letter-spacing: 0; text-indent: 0; text-transform: none; }
+    .aboutpop { max-width: min(520px, calc(100vw - 32px)); padding: 22px 26px 20px; color: #d8cfae; background: #14120d;
+      border: 2px solid #7d7460; text-align: left; line-height: 1.5; }
+    .aboutpop::backdrop { background: rgba(0,0,0,0.65); }
+    .aboutpop p { margin: 0 0 14px; }
+    .aboutpop .aboutclose { font: inherit; cursor: pointer; padding: 6px 16px; color: #d8cfae; background: transparent; border: 2px solid #7d7460; }
   </style>
 </head>
 <body>
@@ -239,11 +249,15 @@
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="door">
-    <nav class="asks" aria-label="Support">
-      <a class="ask" href="https://www.patreon.com/c/dfenhanced" rel="noopener"><i class="supmark supmark-patreon" aria-hidden="true"></i><span><span class="askverb">Support on </span>Patreon</span></a>
-      <a class="ask" href="https://ko-fi.com/daggerfallonline" rel="noopener"><i class="supmark supmark-kofi" aria-hidden="true"></i><span><span class="askverb">Support on </span>Ko-fi</span></a>
+    <nav class="asks" aria-label="About this build">
+      <button class="ask" type="button" popovertarget="about-paperfall"><i class="aboutmark" aria-hidden="true">i</i><span>About</span></button>
     </nav>
-    <h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="1034" /></h1>
+    <div id="about-paperfall" class="aboutpop" popover>
+      <p>Paperfall is a custom DFO client designed to draw in the player’s paperdoll sprite in place of the usual animated sprite.</p>
+      <p><b>DISCLAIMER:</b> Vibe coded from ChatGPT and Claude, so this is not my own work and is buggy.</p>
+      <button class="aboutclose" type="button" popovertarget="about-paperfall" popovertargetaction="hide">Close</button>
+    </div>
+    <h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="Paperdall Online" width="1232" height="1034" /></h1>
     <div class="rule"><i class="gem"></i></div>
     <p class="dek">An open-source rebuild of a classic 1996 RPG that runs in a browser. Same rules, new renderer, nothing to install.</p>
     <p class="gate">You need <b>your own copy</b> of The Elder Scrolls II: Daggerfall, free since 2009. Your game files stay on your device. An account is optional - you only need one to play online or back up your saves.</p>
@@ -367,7 +381,7 @@
     </section>
 
     <footer class="end">
-      <span>DFO Online</span>
+      <span>Paperdall Online</span>
       <a class="build" data-build="" href="https://github.com/Lattymoy/daggerfall-js-source/commit/"></a>
       <a href="https://github.com/Lattymoy/daggerfall-js-source">Source</a>
       <a href="./terms/">Terms</a>
